@@ -1,3 +1,7 @@
+## [2.0.1](https://github.com/antonbabenko/terraform-skill/compare/v2.0.0...v2.0.1) (2026-01-17)
+
+
+
 # [2.0.0](https://github.com/antonbabenko/terraform-skill/compare/v1.1.0...v2.0.0) (2026-01-17)
 
 
