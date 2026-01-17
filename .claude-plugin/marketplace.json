@@ -5,7 +5,7 @@
     "name": "Anton Babenko",
     "email": "anton@antonbabenko.com"
   },
-  "version": "1.1.0",
+  "version": "2.0.0",
   "metadata": {
     "description": "Comprehensive Terraform and OpenTofu best practices skill covering testing, modules, CI/CD, and production patterns.",
     "repository": "https://github.com/antonbabenko/terraform-skill",
