@@ -176,20 +176,36 @@ Releases are automated based on conventional commits in commit messages:
 
 Releases are created automatically when changes are pushed to master.
 
+## Related Resources
+
+### Official Documentation
+- [Terraform Language](https://developer.hashicorp.com/terraform/docs) - HashiCorp official docs
+- [Terraform Testing](https://developer.hashicorp.com/terraform/language/tests) - Native test framework
+- [OpenTofu Documentation](https://opentofu.org/docs/) - OpenTofu official docs
+- [HashiCorp Best Practices](https://developer.hashicorp.com/terraform/cloud-docs/recommended-practices) - Cloud best practices
+
+### Community Resources
+- [Awesome Terraform](https://github.com/shuaibiyy/awesome-tf)
+- [Terraform Best Practices](https://terraform-best-practices.com) - Comprehensive guide (base for this skill)
+- [terraform-aws-modules](https://github.com/terraform-aws-modules) - Production-grade AWS modules
+- [Terratest](https://terratest.gruntwork.io/docs/) - Go testing framework for Terraform
+- [Google Cloud Best Practices](https://docs.cloud.google.com/docs/terraform/best-practices/general-style-structure)
+- [AWS Terraform Best Practices](https://docs.aws.amazon.com/prescriptive-guidance/latest/terraform-aws-provider-best-practices/introduction.html)
+
+### Development Tools
+- [pre-commit-terraform](https://github.com/antonbabenko/pre-commit-terraform) - Pre-commit hooks for Terraform
+- [terraform-docs](https://terraform-docs.io/) - Generate documentation from Terraform modules
+- [terraform-switcher](https://github.com/warrensbox/terraform-switcher) - Terraform version manager
+- [TFLint](https://github.com/terraform-linters/tflint) - Terraform linter
+- [Trivy](https://github.com/aquasecurity/trivy) - Security scanner for IaC
+
 ## License & Attribution
 
 **License:** Apache 2.0 - see [LICENSE](LICENSE)
 
-**Sources:**
-- [terraform-best-practices.com](https://terraform-best-practices.com)
-- HashiCorp Terraform Documentation
-- Google Cloud Terraform Best Practices
-- AWS Terraform Best Practices
-- Community expertise and AWS Hero experience
-
-## Related Resources
-
-- [terraform-best-practices.com](https://terraform-best-practices.com) - Comprehensive guide
-- [terraform-aws-modules](https://github.com/terraform-aws-modules) - Production modules
-- [Compliance.tf](https://compliance.tf) - Terraform Compliance for Cloud-Native Enterprise
-- [Official Terraform Docs](https://www.terraform.io/docs)
+If you create derivative works or skills based on this skill, please include:
+```
+Based on terraform-skill by Anton Babenko
+https://github.com/antonbabenko/terraform-skill
+terraform-best-practices.com | Compliance.tf
+```
