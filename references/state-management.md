@@ -63,8 +63,7 @@ terraform {
 - ✅ No separate DynamoDB table needed
 - ✅ Lower cost (no DynamoDB charges)
 - ✅ Simpler infrastructure (one less resource to manage)
-- ✅ Built-in S3 Object Lock support
-- ✅ Better compliance options (governance/compliance modes)
+- ✅ Lock files stored alongside state in same bucket
 
 #### S3 with DynamoDB Locking (Pre-1.11 or Legacy)
 
@@ -131,18 +130,6 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
-}
-
-# Optional: Enable Object Lock for lock-file support
-resource "aws_s3_bucket_object_lock_configuration" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
-
-  rule {
-    default_retention {
-      mode = "GOVERNANCE"
-      days = 1
-    }
-  }
 }
 
 # MFA Delete for production
@@ -429,7 +416,7 @@ Result: Operations are serialized
 
 | Backend | Locking | Lock Mechanism |
 |---------|---------|----------------|
-| **S3** (Terraform 1.11+) | ✅ Native | S3 Object Lock |
+| **S3** (Terraform 1.11+) | ✅ Native | Lock files |
 | **S3** (Pre-1.11) | ✅ With DynamoDB | DynamoDB table |
 | **Azure Storage** | ✅ Native | Blob lease |
 | **GCS** | ✅ Native | Object metadata |
@@ -441,10 +428,10 @@ Result: Operations are serialized
 ### S3 Native Lock-File (Terraform 1.11+)
 
 **How it works:**
-- Uses S3 Object Lock with retention policies
-- Lock files stored as objects in the same bucket
+- Uses regular S3 objects as lock files
+- Lock files stored in the same bucket as state files
 - No additional AWS services required
-- Automatically released on operation completion
+- Automatically deleted when operations complete
 
 **Configuration:**
 
@@ -464,7 +451,6 @@ terraform {
 - ✅ Simpler setup (no DynamoDB table)
 - ✅ Lower cost (no DynamoDB charges)
 - ✅ Unified management (state + locks in one bucket)
-- ✅ Better compliance (Object Lock modes)
 
 **Migration from DynamoDB:** Simply add `use_lock_file = true` and remove `dynamodb_table`. Both can coexist during migration.
 
