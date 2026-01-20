@@ -410,8 +410,23 @@ checkov -d .
 
 ### Remote Backend Quick Setup
 
-**AWS S3 with DynamoDB locking (Recommended):**
+**AWS S3 (Recommended):**
 
+*Terraform 1.11+ (Recommended):*
+```hcl
+# backend.tf - Native S3 locking, no DynamoDB needed
+terraform {
+  backend "s3" {
+    bucket       = "my-terraform-state"
+    key          = "prod/vpc/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true  # Native S3 locking
+  }
+}
+```
+
+*Pre-1.11 or Legacy DynamoDB locking:*
 ```hcl
 # backend.tf
 terraform {
@@ -573,6 +588,7 @@ terraform plan
 | Provider functions | 1.8+ | Provider-specific data transformation |
 | Cross-variable validation | 1.9+ | Validate relationships between variables |
 | Write-only arguments | 1.11+ | Secrets never stored in state |
+| S3 native lock-file | 1.11+ | State locking without DynamoDB |
 
 ### Quick Examples
 
