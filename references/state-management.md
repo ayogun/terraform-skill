@@ -39,7 +39,36 @@ This document provides detailed guidance on state management, from remote backen
 
 ### AWS S3 Backend (Recommended)
 
-**Complete setup with locking:**
+#### S3 with Native Lock-File (Terraform 1.11+, Recommended)
+
+**Simplest setup - no DynamoDB required:**
+
+```hcl
+# backend.tf
+terraform {
+  backend "s3" {
+    bucket       = "my-terraform-state"
+    key          = "prod/vpc/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true  # Native S3 locking (Terraform 1.11+)
+    
+    # Optional but recommended
+    kms_key_id = "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+  }
+}
+```
+
+**Benefits:**
+- ✅ No separate DynamoDB table needed
+- ✅ Lower cost (no DynamoDB charges)
+- ✅ Simpler infrastructure (one less resource to manage)
+- ✅ Built-in S3 Object Lock support
+- ✅ Better compliance options (governance/compliance modes)
+
+#### S3 with DynamoDB Locking (Pre-1.11 or Legacy)
+
+**Complete setup with DynamoDB:**
 
 ```hcl
 # backend.tf
@@ -57,7 +86,14 @@ terraform {
 }
 ```
 
-**Backend infrastructure setup:**
+**When to use DynamoDB locking:**
+- Terraform versions < 1.11
+- Existing infrastructure already using DynamoDB
+- Need DynamoDB for other purposes
+
+**Migration note:** Existing setups using DynamoDB will continue to work. The `use_lockfile` option is opt-in.
+
+**Backend infrastructure setup (Terraform 1.11+ with lock-file):**
 
 ```hcl
 # bootstrap/main.tf - Run this ONCE to create state backend
@@ -97,6 +133,18 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   restrict_public_buckets = true
 }
 
+# Optional: Enable Object Lock for lock-file support
+resource "aws_s3_bucket_object_lock_configuration" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    default_retention {
+      mode = "GOVERNANCE"
+      days = 1
+    }
+  }
+}
+
 # MFA Delete for production
 # Note: Terraform cannot enable S3 MFA Delete. This must be configured
 # outside of Terraform using the AWS CLI or an SDK with the root account.
@@ -107,6 +155,29 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
 #   --bucket my-terraform-state \
 #   --versioning-configuration Status=Enabled,MFADelete=Enabled \
 #   --mfa "arn-of-mfa-device mfa-code"
+
+# KMS key for encryption
+resource "aws_kms_key" "terraform_state" {
+  description             = "KMS key for Terraform state encryption"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+
+  tags = {
+    Name = "terraform-state-encryption"
+  }
+}
+
+resource "aws_kms_alias" "terraform_state" {
+  name          = "alias/terraform-state"
+  target_key_id = aws_kms_key.terraform_state.key_id
+}
+```
+
+**Backend infrastructure setup (Pre-1.11 with DynamoDB):**
+
+```hcl
+# If using DynamoDB locking, add this resource to the above configuration:
+
 # DynamoDB table for state locking
 resource "aws_dynamodb_table" "terraform_state_lock" {
   name         = "terraform-state-lock"
@@ -126,22 +197,6 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
     Name        = "Terraform State Lock Table"
     Environment = "shared"
   }
-}
-
-# KMS key for encryption
-resource "aws_kms_key" "terraform_state" {
-  description             = "KMS key for Terraform state encryption"
-  deletion_window_in_days = 30
-  enable_key_rotation     = true
-
-  tags = {
-    Name = "terraform-state-encryption"
-  }
-}
-
-resource "aws_kms_alias" "terraform_state" {
-  name          = "alias/terraform-state"
-  target_key_id = aws_kms_key.terraform_state.key_id
 }
 ```
 
@@ -374,7 +429,8 @@ Result: Operations are serialized
 
 | Backend | Locking | Lock Mechanism |
 |---------|---------|----------------|
-| **S3** | ✅ With DynamoDB | DynamoDB table |
+| **S3** (Terraform 1.11+) | ✅ Native | S3 Object Lock |
+| **S3** (Pre-1.11) | ✅ With DynamoDB | DynamoDB table |
 | **Azure Storage** | ✅ Native | Blob lease |
 | **GCS** | ✅ Native | Object metadata |
 | **Terraform Cloud** | ✅ Native | Built-in |
@@ -382,7 +438,37 @@ Result: Operations are serialized
 | **Postgres** | ✅ Native | Row locking |
 | **Local** | ❌ None | N/A |
 
-### DynamoDB Locking for S3
+### S3 Native Lock-File (Terraform 1.11+)
+
+**How it works:**
+- Uses S3 Object Lock with retention policies
+- Lock files stored as objects in the same bucket
+- No additional AWS services required
+- Automatically released on operation completion
+
+**Configuration:**
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket       = "my-terraform-state"
+    key          = "prod/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true  # Enable native S3 locking
+  }
+}
+```
+
+**Benefits over DynamoDB:**
+- ✅ Simpler setup (no DynamoDB table)
+- ✅ Lower cost (no DynamoDB charges)
+- ✅ Unified management (state + locks in one bucket)
+- ✅ Better compliance (Object Lock modes)
+
+**Migration from DynamoDB:** Simply add `use_lockfile = true` and remove `dynamodb_table`. Both can coexist during migration.
+
+### DynamoDB Locking for S3 (Pre-1.11 or Legacy)
 
 **Lock table attributes:**
 - `LockID` (String, Hash Key) - Must be exactly "LockID"
